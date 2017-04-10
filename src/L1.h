@@ -10,7 +10,7 @@ namespace L1 {
 
   const int INS_RETURN = 0;
   const int INS_LABEL = 1;
-  const int INS_ASSIGN = 2;
+  const int INS_TWO_OP = 2;
   const int INS_CALL = 3;
   // const int INS_ = 1;
   // const int INS_ = 1;
@@ -32,11 +32,11 @@ namespace L1 {
     std::string labelName;
   };
 
-  struct Opperand {
-    int type;
-    // 01: assign (movq), {aop}, {sop}, comp, setle, movzbq
-    // 02:  &
-  };
+  // struct Opperand {
+  //   int type;
+  //   // 01: assign (movq), {aop}, {sop}, comp, setle, movzbq
+  //   // 02:  &
+  // };
 
   struct Item {
     int type;         // 0: register, 1: label, 2: number
@@ -46,13 +46,15 @@ namespace L1 {
 
   struct Cmp {
     std::vector<L1::Item *> items;
-    L1::Opperand op;
+    // L1::Opperand op;
+    std::string op;
   };
 
   struct Instruction {
     int type;     // 0: 0 item, 1: 1 item, 2: 2 items, 3: cmp, 4: cjump, 5: CISC
     std::vector<L1::Item *> items;
-    L1::Opperand op;
+    // L1::Opperand op;
+    std::string op;
     L1::Cmp cmp;  // 3 & 4 has cmp
   };
 

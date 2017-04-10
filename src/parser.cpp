@@ -70,8 +70,13 @@ namespace L1 {
     > {};
 
   struct left_arrow:
-    pegtl::string < '<', '-' > {};
+    pegtl::string< '<', '-' > {};
 
+  struct plus_minus_op:
+    pegtl::sor<
+      pegtl::string< '+', '='>,
+      pegtl::string< '-', '='>
+    > {};
 
   struct function_name:
     label {};
@@ -217,27 +222,27 @@ namespace L1 {
   struct atlas:
     L1_w {};
 
-  struct L1_ins_assign:
+  struct L1_ins_two_op:
     pegtl::sor<
       pegtl::seq< atlas, seps, left_arrow, seps, L1_s >,
       pegtl::seq< L1_w, seps, left_arrow, seps, L1_mem_x_M >,
-      pegtl::seq< seps, L1_mem_x_M, seps, left_arrow, seps, L1_s >
+      pegtl::seq< seps, L1_mem_x_M, seps, left_arrow, seps, L1_s >,
+      pegtl::seq< seps, L1_w, seps, L1_aop, seps, L1_t >,
+      pegtl::seq< seps, L1_w, seps, L1_sop, seps, pegtl::string< 'r', 'c', 'x' > >,
+      pegtl::seq< seps, L1_w, seps, L1_sop, seps, number >,
+      pegtl::seq< seps, L1_mem_x_M, seps, plus_minus_op, seps, L1_t >,
+      pegtl::seq< seps, L1_w, seps, plus_minus_op, seps, L1_mem_x_M >
     > {};
 
-  struct L1_ins_right_mem_assign:
-    pegtl::seq< L1_w, seps, left_arrow, seps, L1_mem_x_M > {}; //
 
-  struct L1_ins_left_mem_assign:
-    pegtl::seq< seps, L1_mem_x_M, seps, left_arrow, seps, L1_s > {}; // ok
+  // struct L1_ins_aop:
+  //   pegtl::seq< seps, L1_w, seps, L1_aop, seps, L1_t > {}; //
+  //
+  // struct L1_ins_sop_rcx:
+  //   pegtl::seq< seps, L1_w, seps, L1_sop, seps, pegtl::string< 'r', 'c', 'x' > > {}; //
 
-  struct L1_ins_aop:
-    pegtl::seq< seps, L1_w, seps, L1_aop, seps, L1_t > {}; //
-
-  struct L1_ins_sop_rcx:
-    pegtl::seq< seps, L1_w, seps, L1_sop, seps, pegtl::string< 'r', 'c', 'x' > > {}; //
-
-  struct L1_ins_sop_num:
-    pegtl::seq< seps, L1_w, seps, L1_sop, seps, number > {};
+  // struct L1_ins_sop_num:
+  //   pegtl::seq< seps, L1_w, seps, L1_sop, seps, number > {};
 
 
 
@@ -272,18 +277,18 @@ namespace L1 {
       pegtl::seq<
         pegtl::one<'('>,
         pegtl::sor<
-          L1_ins_assign,
-          L1_ins_right_mem_assign,
-          L1_ins_left_mem_assign,
-          L1_ins_aop,
-          L1_ins_sop_rcx,
-          L1_ins_sop_num
+          L1_ins_two_op
+          // L1_ins_right_mem_assign,
+          // L1_ins_left_mem_assign,
+          // L1_ins_aop,
+          // L1_ins_sop_rcx,
+          // L1_ins_sop_num
           // pegtl::seq< seps, L1_mem_x_M, seps, plus_equal, seps, L1_t >, //
           // pegtl::seq< seps, L1_mem_x_M, seps, minus_equal, seps, L1_t >, //
           // pegtl::seq< seps, L1_w, seps, plus_equal, seps, L1_mem_x_M >, //
           // pegtl::seq< seps, L1_w, seps, minus_equal, seps, L1_mem_x_M >, //
-          // pegtl::seq< seps, L1_w, seps, left_arrow, seps, L1_t_cmp_t >, //
-          // pegtl::seq< seps, pegtl::string< 'c', 'j', 'u', 'm', 'p' >, seps, L1_t_cmp_t, seps, label, label >, //
+          // pegtl::seq< seps, L1_w, seps, left_arrow, seps, L1_t_cmp_t >, // ?
+          // pegtl::seq< seps, pegtl::string< 'c', 'j', 'u', 'm', 'p' >, seps, L1_t_cmp_t, seps, label, label > //
         >,
         pegtl::one<')'>
       >,
@@ -429,33 +434,35 @@ namespace L1 {
     }
   };
 
-  template<> struct action < L1_ins_assign > {
+  template<> struct action < L1_ins_two_op > {
     static void apply( const pegtl::input & in, L1::Program & p ) {
       L1::Function *currentF = p.functions.back();
       L1::Instruction *newIns = new L1::Instruction();
-      newIns->type = L1::INS_ASSIGN;
+      newIns->type = L1::INS_TWO_OP;
 
       vector<std::string> tokens = split_by_space(in.string());
 
       // cout <<"!!"<< tokens.at(0) << "!!";
       if (tokens.size() == 3) { // no mem assignment
-        cout << "tinkering " << tokens.at(0) << " ~~ " << tokens.at(2) << endl;
+        cout << "tinkering " << tokens.at(0) << " " << tokens.at(1) << " " << tokens.at(2) << endl;
         newIns->items.push_back(L1::new_item(tokens.at(0)));
         newIns->items.push_back(L1::new_item(tokens.at(2)));
+        newIns->op = tokens.at(1);
 
       } else if (tokens.at(0) == "(mem") { // left mem assign
         tokens.at(2).pop_back();
-        cout << "tinkering (" << tokens.at(1) << " - " << tokens.at(2) << ") ~~ " << tokens.at(4) << endl;
+        cout << "tinkering (" << tokens.at(1) << " - " << tokens.at(2) << ") " << tokens.at(3) << " " << tokens.at(4) << endl;
         newIns->items.push_back(L1::new_item2(tokens.at(1), tokens.at(2)));
         newIns->items.push_back(L1::new_item(tokens.at(4)));
+        newIns->op = tokens.at(3);
       }
-      else { // right mem assign
+      else { // right mem op
         tokens.at(4).pop_back();
-        cout << "tinkering (" << tokens.at(0) << " ~~ (" << tokens.at(3) << " - " << tokens.at(4) << ")" << endl;
+        cout << "tinkering (" << tokens.at(0) << " " << tokens.at(1) << " (" << tokens.at(3) << " - " << tokens.at(4) << ")" << endl;
         newIns->items.push_back(L1::new_item(tokens.at(0)));
         newIns->items.push_back(L1::new_item2(tokens.at(3), tokens.at(4)));
+        newIns->op = tokens.at(1);
       }
-
       currentF->instructions.push_back(newIns);
     }
   };
@@ -508,6 +515,13 @@ namespace L1 {
       currentF->instructions.push_back(newIns);
     }
   };
+
+  // template<> struct action < L1_ins_AOP > {
+  //   static void apply( const pegtl::input & in, L1::Program & p ) {
+  //     L1::Function *currentF = p.functions.back();
+  //     L1::Instruction *newIns = new L1::Instruction();
+  //     newIns->type = L1::INS_AOP;
+
 
   Program L1_parse_file (char *fileName) {
 

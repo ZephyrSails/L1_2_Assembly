@@ -11,10 +11,23 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fstream>
+#include <map>
 
 #include <parser.h>
 
 using namespace std;
+
+std::map<std::string, std::string> init_op_map() {
+  std::map<std::string, std::string> op_map;
+  op_map["<-"] = "movq";
+  op_map["+="] = "addq";
+  op_map["-="] = "subq";
+  op_map["*="] = "imulq";
+  op_map["&="] = "andq";
+  op_map["<<="] = "salq";
+  op_map[">>="] = "sarq";
+  return op_map;
+}
 
 void return_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
   if (f->locals > 0) {
@@ -46,8 +59,8 @@ std::string item2string(L1::Item * i) {
   return str;
 }
 
-void assign_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-  *outputFile << "\n\tmovq " << item2string(i->items.at(1)) << ", " << item2string(i->items.at(0));
+void L1_ins_two_op(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
+  *outputFile << "\n\t" << op_map[i->op] << item2string(i->items.at(1)) << ", " << item2string(i->items.at(0));
 }
 
 void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
@@ -59,7 +72,6 @@ void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
   } else {
     *outputFile << "\n\tcall _" << item->name;
   }
-
 }
 
 //
@@ -164,6 +176,8 @@ int main(int argc, char **argv) {
    */
   cout << endl << "Program: " << p.entryPointLabel << endl;
 
+  std::map<std::string, std::string> op_map = init_op_map();
+
   for (auto f : p.functions) {
     outputFile << "\n\n_" << f->name << ":";
 
@@ -173,7 +187,7 @@ int main(int argc, char **argv) {
                 break;
         case L1::INS_LABEL: label_ins(& outputFile, i, f);
                 break;
-        case L1::INS_ASSIGN: assign_ins(& outputFile, i, f);
+        case L1::INS_TWO_OP: L1_ins_two_op(& outputFile, i, f, op_map);
                 break;
         case L1::INS_CALL: call_ins(& outputFile, i, f);
                 break;
