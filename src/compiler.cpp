@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
     cout << f->name << " has " << f->arguments << " parameters and " << f->locals << " local variables" << endl;
     cout << f->name << " has " << f->instructions.size() << " instructions" << endl;
   }
-
+  outputFile << "\n";
   outputFile.close();
 
 
