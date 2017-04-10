@@ -42,11 +42,16 @@ void label_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f
   *outputFile << "\n\n_" << i->items.at(0)->name << ":";
 }
 
-std::string item2string(L1::Item * i) {
+std::string item2string(L1::Item * i, bool isLeft = false) {
   std::string str;
   switch (i->type) {
     case L1::ITEM_LABEL:
-      str = "_" + i->name;
+      if (isLeft) {
+        str = "$_" + i->name;
+      } else {
+        str = "_" + i->name;
+      }
+
       break;
     case L1::ITEM_REGISTER:
       if (i->value == -1) {
@@ -62,7 +67,10 @@ std::string item2string(L1::Item * i) {
 }
 
 void L1_ins_two_op(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
-  *outputFile << "\n\t" << op_map[i->op] << " " << item2string(i->items.at(1)) << ", " << item2string(i->items.at(0));
+  L1::Item * left_item = i->items.at(1);
+
+
+  *outputFile << "\n\t" << op_map[i->op] << " " << item2string(left_item, true) << ", " << item2string(i->items.at(0));
 }
 
 void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
@@ -99,6 +107,10 @@ void goto_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
 
 void inc_dec_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
   *outputFile << "\n\t" << op_map[i->op] << " " << i->items.at(0)->name;
+}
+
+void cisc_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
+  // i
 }
 
 //

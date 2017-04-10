@@ -423,21 +423,21 @@ namespace L1 {
 
       // cout <<"!!"<< tokens.at(0) << "!!";
       if (tokens.size() == 3) { // no mem assignment
-        cout << "tinkering " << tokens.at(0) << " " << tokens.at(1) << " " << tokens.at(2) << endl;
+        // cout << "tinkering " << tokens.at(0) << " " << tokens.at(1) << " " << tokens.at(2) << endl;
         newIns->items.push_back(L1::new_item(tokens.at(0)));
         newIns->items.push_back(L1::new_item(tokens.at(2)));
         newIns->op = tokens.at(1);
 
       } else if (tokens.at(0) == "(mem") { // left mem assign
         tokens.at(2).pop_back();
-        cout << "tinkering (" << tokens.at(1) << " - " << tokens.at(2) << ") " << tokens.at(3) << " " << tokens.at(4) << endl;
+        // cout << "tinkering (" << tokens.at(1) << " - " << tokens.at(2) << ") " << tokens.at(3) << " " << tokens.at(4) << endl;
         newIns->items.push_back(L1::new_item2(tokens.at(1), tokens.at(2)));
         newIns->items.push_back(L1::new_item(tokens.at(4)));
         newIns->op = tokens.at(3);
       }
       else { // right mem op
         tokens.at(4).pop_back();
-        cout << "tinkering (" << tokens.at(0) << " " << tokens.at(1) << " (" << tokens.at(3) << " - " << tokens.at(4) << ")" << endl;
+        // cout << "tinkering (" << tokens.at(0) << " " << tokens.at(1) << " (" << tokens.at(3) << " - " << tokens.at(4) << ")" << endl;
         newIns->items.push_back(L1::new_item(tokens.at(0)));
         newIns->items.push_back(L1::new_item2(tokens.at(3), tokens.at(4)));
         newIns->op = tokens.at(1);
@@ -454,7 +454,7 @@ namespace L1 {
 
       vector<std::string> tokens = split_by_space(in.string());
 
-      cout << "tinkering call " << tokens.at(1) << " - " << tokens.at(2) << endl;
+      // cout << "tinkering call " << tokens.at(1) << " - " << tokens.at(2) << endl;
 
       Item *item = new Item();
       item->type = ITEM_REGISTER;
@@ -472,7 +472,7 @@ namespace L1 {
       L1::Function *currentF = p.functions.back();
       L1::Instruction *newIns = new L1::Instruction();
 
-      cout << "tinkering call return" << endl;
+      // cout << "tinkering call return" << endl;
 
       newIns->type = L1::INS_RETURN;
 
@@ -489,7 +489,7 @@ namespace L1 {
       L1::Item *newItem = new L1::Item();
       newIns->items.push_back(new_item(in.string()));
 
-      cout << "tinkering label: " << in.string() << endl;
+      // cout << "tinkering label: " << in.string() << endl;
 
       currentF->instructions.push_back(newIns);
     }
@@ -504,7 +504,7 @@ namespace L1 {
       L1::Item *newItem = new L1::Item();
       newIns->items.push_back(new_item(in.string()));
 
-      cout << "tinkering label: " << in.string() << endl;
+      // cout << "tinkering label: " << in.string() << endl;
 
       currentF->instructions.push_back(newIns);
     }
@@ -524,7 +524,26 @@ namespace L1 {
       L1::Item *newItem = new L1::Item();
       newIns->items.push_back(new_item(insStr));
 
-      cout << "tinkering label: " << in.string() << endl;
+      // cout << "tinkering label: " << in.string() << endl;
+
+      currentF->instructions.push_back(newIns);
+    }
+  };
+
+  template<> struct action < L1_ins_cisc > {
+    static void apply( const pegtl::input & in, L1::Program & p ) {
+      L1::Function *currentF = p.functions.back();
+      L1::Instruction *newIns = new L1::Instruction();
+      newIns->type = L1::INS_INC_CISC;
+
+      vector<std::string> tokens = split_by_space(in.string());
+
+      L1::Item *newItem = new L1::Item();
+      newIns->items.push_back(new_item(tokens.at(0)));
+      newIns->items.push_back(new_item(tokens.at(2)));
+      newIns->items.push_back(new_item2(tokens.at(3), tokens.at(4)));
+
+      // cout << "tinkering label: " << in.string() << endl;
 
       currentF->instructions.push_back(newIns);
     }

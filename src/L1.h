@@ -14,6 +14,7 @@ namespace L1 {
   const int INS_CALL = 3;
   const int INS_GOTO = 4;
   const int INS_INC_DEC = 5;
+  const int INS_INC_CISC = 6;
   // const int INS_ = 1;
   // const int INS_ = 1;
   // const int INS_ = 1;
