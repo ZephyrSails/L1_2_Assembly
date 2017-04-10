@@ -234,18 +234,6 @@ namespace L1 {
       pegtl::seq< seps, L1_w, seps, plus_minus_op, seps, L1_mem_x_M >
     > {};
 
-
-  // struct L1_ins_aop:
-  //   pegtl::seq< seps, L1_w, seps, L1_aop, seps, L1_t > {}; //
-  //
-  // struct L1_ins_sop_rcx:
-  //   pegtl::seq< seps, L1_w, seps, L1_sop, seps, pegtl::string< 'r', 'c', 'x' > > {}; //
-
-  // struct L1_ins_sop_num:
-  //   pegtl::seq< seps, L1_w, seps, L1_sop, seps, number > {};
-
-
-
   struct L1_ins_label:
     label {};
 
@@ -261,11 +249,12 @@ namespace L1 {
       pegtl::seq< seps, pegtl::string < 'c', 'a', 'l', 'l' >, seps, L1_system_func, seps >
     > {};
 
-  struct L1_ins_inc:
-    pegtl::seq< seps, L1_w, seps, pegtl::string < '+', '+' >, seps > {};
+  struct L1_ins_inc_dec:
+    pegtl::sor<
+      pegtl::seq< seps, L1_w, seps, pegtl::string < '+', '+' >, seps >,
+      pegtl::seq< seps, L1_w, seps, pegtl::string < '-', '-' >, seps >
+    > {};
 
-  struct L1_ins_dec:
-    pegtl::seq< seps, L1_w, seps, pegtl::string < '-', '-' >, seps > {};
 
   struct L1_ins_cisc:
     pegtl::seq< seps, L1_w, seps, pegtl::one< '@' >, seps, L1_w, seps, L1_w, seps, L1_E, seps > {};
@@ -278,15 +267,6 @@ namespace L1 {
         pegtl::one<'('>,
         pegtl::sor<
           L1_ins_two_op
-          // L1_ins_right_mem_assign,
-          // L1_ins_left_mem_assign,
-          // L1_ins_aop,
-          // L1_ins_sop_rcx,
-          // L1_ins_sop_num
-          // pegtl::seq< seps, L1_mem_x_M, seps, plus_equal, seps, L1_t >, //
-          // pegtl::seq< seps, L1_mem_x_M, seps, minus_equal, seps, L1_t >, //
-          // pegtl::seq< seps, L1_w, seps, plus_equal, seps, L1_mem_x_M >, //
-          // pegtl::seq< seps, L1_w, seps, minus_equal, seps, L1_mem_x_M >, //
           // pegtl::seq< seps, L1_w, seps, left_arrow, seps, L1_t_cmp_t >, // ?
           // pegtl::seq< seps, pegtl::string< 'c', 'j', 'u', 'm', 'p' >, seps, L1_t_cmp_t, seps, label, label > //
         >,
@@ -299,8 +279,7 @@ namespace L1 {
           L1_ins_goto,
           L1_ins_return,
           L1_ins_call_func,
-          L1_ins_inc,
-          L1_ins_dec,
+          L1_ins_inc_dec,
           L1_ins_cisc
         >,
         pegtl::one<')'>
@@ -509,6 +488,41 @@ namespace L1 {
 
       L1::Item *newItem = new L1::Item();
       newIns->items.push_back(new_item(in.string()));
+
+      cout << "tinkering label: " << in.string() << endl;
+
+      currentF->instructions.push_back(newIns);
+    }
+  };
+
+  template<> struct action < L1_ins_goto > {
+    static void apply( const pegtl::input & in, L1::Program & p ) {
+      L1::Function *currentF = p.functions.back();
+      L1::Instruction *newIns = new L1::Instruction();
+      newIns->type = L1::INS_GOTO;
+
+      L1::Item *newItem = new L1::Item();
+      newIns->items.push_back(new_item(in.string()));
+
+      cout << "tinkering label: " << in.string() << endl;
+
+      currentF->instructions.push_back(newIns);
+    }
+  };
+
+  template<> struct action < L1_ins_inc_dec > {
+    static void apply( const pegtl::input & in, L1::Program & p ) {
+      L1::Function *currentF = p.functions.back();
+      L1::Instruction *newIns = new L1::Instruction();
+      newIns->type = L1::INS_INC_DEC;
+
+      std::string insStr = in.string();
+
+      newIns->op = insStr.back();
+      insStr.pop_back();
+      insStr.pop_back();
+      L1::Item *newItem = new L1::Item();
+      newIns->items.push_back(new_item(insStr));
 
       cout << "tinkering label: " << in.string() << endl;
 

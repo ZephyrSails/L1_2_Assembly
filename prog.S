@@ -8,7 +8,7 @@ go:
 	pushq	%r14
 	pushq	%r15
 
-	call _myGo
+	call _go
 
 	popq	%r15
 	popq	%r14
@@ -18,5 +18,18 @@ go:
 	popq	%rbx
 	retq
 
-_myGo:
+_go:
+	movq $5, %rdi
+	movq _testFunction_ret, -8(%rsp)
+	subq $8, %rsp
+	jmp _testFunction
+
+_testFunction_ret:
+	movq %rax, %rdi
+	call print
+	retq
+
+_testFunction:
+	addq $4, %rdi
+	movq %rdi, %rax
 	retq

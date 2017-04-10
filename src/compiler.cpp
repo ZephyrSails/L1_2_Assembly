@@ -26,6 +26,8 @@ std::map<std::string, std::string> init_op_map() {
   op_map["&="] = "andq";
   op_map["<<="] = "salq";
   op_map[">>="] = "sarq";
+  op_map["+"] = "inc";
+  op_map["-"] = "dec";
   return op_map;
 }
 
@@ -60,18 +62,43 @@ std::string item2string(L1::Item * i) {
 }
 
 void L1_ins_two_op(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
-  *outputFile << "\n\t" << op_map[i->op] << item2string(i->items.at(1)) << ", " << item2string(i->items.at(0));
+  *outputFile << "\n\t" << op_map[i->op] << " " << item2string(i->items.at(1)) << ", " << item2string(i->items.at(0));
 }
 
 void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
   L1::Item * item = i->items.at(0);
-  if (item->name.at(0) == ':') {
-    if (item->value > 6) {
-
+  if (item->name.at(0) == ':' || item->name.at(0) == 'r') {  // self defined func
+    int rsp_offset;
+    if (item->name.at(0) == ':') {
+      item->name.erase(0, 1);
+      item->name.insert(0, "_");
+    } else {
+      item->name.insert(0, "*%");
     }
-  } else {
-    *outputFile << "\n\tcall _" << item->name;
+
+    if (item->value > 6) {
+      // cout << "\n--------- value > 6";
+      rsp_offset = (item->value - 5) * 8;
+    } else {
+      rsp_offset = 8;
+    }
+    *outputFile << "\n\tsubq $" << std::to_string(rsp_offset) << ", %rsp";
+    *outputFile << "\n\tjmp " << item->name;
+  } else { // system func
+    // cout << "\n--------- value <= 6";
+    *outputFile << "\n\tcall " << item->name;
   }
+}
+
+void goto_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
+  L1::Item *item = i->items.at(0);
+  item->name.erase(0, 1);
+  item->name.insert(0, "_");
+  *outputFile << "\n\tjmp " << item->name;
+}
+
+void inc_dec_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
+  *outputFile << "\n\t" << op_map[i->op] << " " << i->items.at(0)->name;
 }
 
 //
@@ -164,10 +191,8 @@ int main(int argc, char **argv) {
   outputFileName += ".S";
   // cout << outputFileName;
   // outputFileName = malloc("bin/" + argv[optind] + ".S");
-
-  outputFile.open("prog.S");
-
-  outputFile << ".text\n\t.globl go\ngo:\n\tpushq\t%rbx\n\tpushq\t%rbp\n\tpushq\t%r12\n\tpushq\t%r13\n\tpushq\t%r14\n\tpushq\t%r15\n\n";
+  outputFile.open("prog.S");
+  outputFile << ".text\n\t.globl go\ngo:\n\tpushq\t%rbx\n\tpushq\t%rbp\n\tpushq\t%r12\n\tpushq\t%r13\n\tpushq\t%r14\n\tpushq\t%r15\n\n";
   outputFile << "\tcall _" << p.entryPointLabel << "\n\n";
   outputFile << "\tpopq\t%r15\n\tpopq\t%r14\n\tpopq\t%r13\n\tpopq\t%r12\n\tpopq\t%rbp\n\tpopq\t%rbx\n\tretq";
   // outputFile << "_myGo:\n\tmovq $3, %rdi\n\tcall printf\n\tretq";
@@ -180,6 +205,9 @@ int main(int argc, char **argv) {
 
   for (auto f : p.functions) {
     outputFile << "\n\n_" << f->name << ":";
+    if (f->locals > 0) {
+      outputFile << "\n\tsubq $" << std::to_string(f->locals * 8) << ", %rsp";
+    }
 
     for (auto i : f->instructions) {
       switch (i->type) {
@@ -190,6 +218,10 @@ int main(int argc, char **argv) {
         case L1::INS_TWO_OP: L1_ins_two_op(& outputFile, i, f, op_map);
                 break;
         case L1::INS_CALL: call_ins(& outputFile, i, f);
+                break;
+        case L1::INS_GOTO: goto_ins(& outputFile, i, f);
+                break;
+        case L1::INS_INC_DEC: inc_dec_ins(& outputFile, i, f, op_map);
                 break;
         // case 2: two_item_ins(& outputFile, i, f);
         //         break;
