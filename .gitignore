@@ -1,3 +1,4 @@
 /obj/*
 prog.o
 prog.S
+/bin/*
