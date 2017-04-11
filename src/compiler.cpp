@@ -26,8 +26,8 @@ std::map<std::string, std::string> init_op_map() {
   op_map["&="] = "andq";
   op_map["<<="] = "salq";
   op_map[">>="] = "sarq";
-  op_map["+"] = "inc";
-  op_map["-"] = "dec";
+  op_map["++"] = "inc";
+  op_map["--"] = "dec";
   return op_map;
 }
 
