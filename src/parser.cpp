@@ -431,7 +431,6 @@ namespace L1 {
   //   istringstream f(str);
   //   std::string s;
   //   while (std::getline(f, s, delimiter)) {
-  //     cout << s << endl;
   //     strings.push_back(s);
   //   }
   //   return strings;
@@ -444,8 +443,6 @@ namespace L1 {
 
     while (ss >> buf)
       tokens.push_back(buf);
-      // cout << "haha: " << buf << " " << tokens.size() << endl;
-      // cout <<
 
     return tokens;
   }
@@ -510,7 +507,7 @@ namespace L1 {
       newIns->type = L1::INS_MEM_OR_W_START;
 
       if (v.size() == 3) { // no mem, two op
-        cout << "tinkering no mem assign: " << v.at(0) << " " << v.at(1) << " " << v.at(2) << endl;
+        // cout << "tinkering no mem assign: " << v.at(0) << " " << v.at(1) << " " << v.at(2) << endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item(v.at(2)));
         newIns->op = v.at(1);
@@ -518,30 +515,30 @@ namespace L1 {
       } else if (v.size() == 2) { // INS_INC_DEC
         newIns->type = L1::INS_INC_DEC;
 
-        cout << "tinkering L1_ins_inc_dec: " << v.at(0) << v.at(1) << endl;
+        // cout << "tinkering L1_ins_inc_dec: " << v.at(0) << v.at(1) << endl;
         newIns->op = v.at(1);
         newIns->items.push_back(new_item(v.at(0)));
       } else if (v.size() == 4) { // CISC
         newIns->type = L1::INS_CISC;
 
-        cout << "tinkering CISC: " << v.at(0) << " @ " << v.at(1) << " " << v.at(2) << " " << v.at(3) << endl;
+        // cout << "tinkering CISC: " << v.at(0) << " @ " << v.at(1) << " " << v.at(2) << " " << v.at(3) << endl;
         newIns->items.push_back(new_item(v.at(0)));
         newIns->items.push_back(new_item(v.at(1)));
         newIns->items.push_back(new_item2(v.at(2), v.at(3)));
       } else if (v.at(0) == "mem") { // left mem, two op
-        cout << "tinkering left mem (" << v.at(1) << " " << v.at(2) << ") " << v.at(3) << " " << v.at(4) << endl;
+        // cout << "tinkering left mem (" << v.at(1) << " " << v.at(2) << ") " << v.at(3) << " " << v.at(4) << endl;
         newIns->items.push_back(L1::new_item2(v.at(1), v.at(2)));
         newIns->items.push_back(L1::new_item(v.at(4)));
         newIns->op = v.at(3);
       } else if (v.at(2) == "mem") { // right mem two op
-        cout << "tinkering right mem (" << v.at(0) << " " << v.at(1) << " (" << v.at(3) << " " << v.at(4) << ")" << endl;
+        // cout << "tinkering right mem (" << v.at(0) << " " << v.at(1) << " (" << v.at(3) << " " << v.at(4) << ")" << endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item2(v.at(3), v.at(4)));
         newIns->op = v.at(1);
       } else { // cmp, 5 cmp
         newIns->type = L1::INS_CMP;
 
-        cout << "tinkering cmp " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
+        // cout << "tinkering cmp " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item(v.at(2)));
         newIns->items.push_back(L1::new_item(v.at(4)));
@@ -558,7 +555,7 @@ namespace L1 {
       L1::Instruction *newIns = new L1::Instruction();
       newIns->type = L1::INS_CJUMP;
 
-      cout << "tinkering cjump " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
+      // cout << "tinkering cjump " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
       newIns->items.push_back(L1::new_item(v.at(0)));
       newIns->op = v.at(1);
       newIns->items.push_back(L1::new_item(v.at(2)));
@@ -576,7 +573,7 @@ namespace L1 {
       L1::Instruction *newIns = new L1::Instruction();
       newIns->type = L1::INS_CALL;
 
-      cout << "tinkering " << v.at(0) << " ?? " << v.at(1) << " - " << v.at(2) << endl;
+      // cout << "tinkering " << v.at(0) << " ?? " << v.at(1) << " - " << v.at(2) << endl;
 
       Item *item = new Item();
       item->type = ITEM_REGISTER;
@@ -594,7 +591,7 @@ namespace L1 {
       L1::Function *currentF = p.functions.back();
       L1::Instruction *newIns = new L1::Instruction();
 
-      cout << "tinkering call return" << endl;
+      // cout << "tinkering call return" << endl;
 
       newIns->type = L1::INS_RETURN;
 
@@ -612,7 +609,7 @@ namespace L1 {
       L1::Item *newItem = new L1::Item();
       newIns->items.push_back(new_item(in.string()));
 
-      cout << "tinkering label: " << in.string() << endl;
+      // cout << "tinkering label: " << in.string() << endl;
 
       currentF->instructions.push_back(newIns);
       v.clear();
@@ -628,7 +625,7 @@ namespace L1 {
       L1::Item *newItem = new L1::Item();
       newIns->items.push_back(new_item(v.at(0)));
 
-      cout << "tinkering L1_ins_goto: " << v.at(0) << endl;
+      // cout << "tinkering L1_ins_goto: " << v.at(0) << endl;
 
       currentF->instructions.push_back(newIns);
       v.clear();
@@ -654,7 +651,6 @@ namespace L1 {
   //     newIns->items.push_back(new_item(v.at(2)));
   //     newIns->items.push_back(new_item2(v.at(3), v.at(4)));
   //
-  //     cout << "tinkering L1_ins_cisc: " << in.string() << endl;
   //
   //     currentF->instructions.push_back(newIns);
   //     v.clear();
@@ -676,126 +672,126 @@ namespace L1 {
   template<> struct action < runtime_system_func > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action runtime_system_func " << in.string() << endl;
+      // cout << "tinkering action runtime_system_func " << in.string() << endl;
     }
   };
 
   template<> struct action < call > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action call " << in.string() << endl;
+      // cout << "tinkering action call " << in.string() << endl;
     }
   };
 
   template<> struct action < cmp > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action cmp " << in.string() << endl;
+      // cout << "tinkering action cmp " << in.string() << endl;
     }
   };
 
   template<> struct action < u > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action u " << in.string() << endl;
+      // cout << "tinkering action u " << in.string() << endl;
     }
   };
 
   template<> struct action < N > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action N " << in.string() << endl;
+      // cout << "tinkering action N " << in.string() << endl;
     }
   };
 
   template<> struct action < plus_minus_op > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action plus_minus_op " << in.string() << endl;
+      // cout << "tinkering action plus_minus_op " << in.string() << endl;
     }
   };
 
   template<> struct action < rcx > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action rcx " << in.string() << endl;
+      // cout << "tinkering action rcx " << in.string() << endl;
     }
   };
 
   template<> struct action < mem > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action mem " << in.string() << endl;
+      // cout << "tinkering action mem " << in.string() << endl;
     }
   };
 
   template<> struct action < t > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action t " << in.string() << endl;
+      // cout << "tinkering action t " << in.string() << endl;
     }
   };
 
   template<> struct action < w > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action w " << in.string() << endl;
+      // cout << "tinkering action w " << in.string() << endl;
     }
   };
 
   template<> struct action < left_arrow > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action left_arrow " << in.string() << endl;
+      // cout << "tinkering action left_arrow " << in.string() << endl;
     }
   };
 
   template<> struct action < s > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action s " << in.string() << endl;
+      // cout << "tinkering action s " << in.string() << endl;
     }
   };
 
   template<> struct action < x > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action x " << in.string() << endl;
+      // cout << "tinkering action x " << in.string() << endl;
     }
   };
 
   template<> struct action < aop > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action aop " << in.string() << endl;
+      // cout << "tinkering action aop " << in.string() << endl;
     }
   };
 
   template<> struct action < sop > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action sop " << in.string() << endl;
+      // cout << "tinkering action sop " << in.string() << endl;
     }
   };
 
   template<> struct action < M > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action M " << in.string() << endl;
+      // cout << "tinkering action M " << in.string() << endl;
     }
   };
 
   template<> struct action < E > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action E " << in.string() << endl;
+      // cout << "tinkering action E " << in.string() << endl;
     }
   };
 
   template<> struct action < label > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
-      cout << "tinkering action label " << in.string() << endl;
+      // cout << "tinkering action label " << in.string() << endl;
     }
   };
 
@@ -803,9 +799,9 @@ namespace L1 {
     /*
      * Check the grammar for some possible issues.
      */
-    // cout << "??\n";
+    cout << "??\n";
     pegtl::analyze< L1::grammar >();
-    // cout << "???\n";
+    cout << "???\n";
     /*
      * Parse.
      */

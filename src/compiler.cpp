@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  cout << "Init done.\n";
+  // cout << "Init done.\n";
   /* Parse the L1 program.
    */
   L1::Program p = L1::L1_parse_file(argv[optind]);
@@ -267,10 +267,10 @@ int main(int argc, char **argv) {
   std::ofstream outputFile;
 
   // std::string * fileName = new std::string();
-  std::string outputFileName;
-  outputFileName += "bin/";
-  outputFileName += argv[optind];
-  outputFileName += ".S";
+  // std::string outputFileName;
+  // outputFileName += "bin/";
+  // outputFileName += argv[optind];
+  // outputFileName += ".S";
   // cout << outputFileName;
   // outputFileName = malloc("bin/" + argv[optind] + ".S");
   outputFile.open("prog.S");
@@ -278,7 +278,8 @@ int main(int argc, char **argv) {
 
   /* Generate x86_64 code
    */
-  cout << endl << "Program: " << p.entryPointLabel << endl;
+  // cout << endl << "Program: " << p.entryPointLabel << endl;
+  cout << argv[optind] << endl;
 
   std::map<std::string, std::string> op_map = init_op_map();
   std::map<std::string, std::string> cmp_reg_map = init_cmp_reg_map();
@@ -319,8 +320,8 @@ int main(int argc, char **argv) {
       }
     }
 
-    cout << f->name << " has " << f->arguments << " parameters and " << f->locals << " local variables" << endl;
-    cout << f->name << " has " << f->instructions.size() << " instructions" << endl;
+    // cout << f->name << " has " << f->arguments << " parameters and " << f->locals << " local variables" << endl;
+    // cout << f->name << " has " << f->instructions.size() << " instructions" << endl;
   }
   outputFile << "\n";
   outputFile.close();
