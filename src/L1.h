@@ -17,14 +17,6 @@ namespace L1 {
   const int INS_CISC = 6;
   const int INS_CMP = 7;
   const int INS_CJUMP = 8;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
-  // const int INS_ = 1;
 
   const int INS_TYPE_1_ITEM = 1;
   const int INS_TYPE_2_ITEM = 2;
@@ -36,12 +28,6 @@ namespace L1 {
   struct L1_item {
     std::string labelName;
   };
-
-  // struct Opperand {
-  //   int type;
-  //   // 01: assign (movq), {aop}, {sop}, comp, setle, movzbq
-  //   // 02:  &
-  // };
 
   struct Item {
     int type;         // 0: register, 1: label, 2: number

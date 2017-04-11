@@ -123,7 +123,7 @@ void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
 
 void goto_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
   L1::Item *item = i->items.at(0);
-  item->name.erase(0, 1);
+  // item->name.erase(0, 1);
   item->name.insert(0, "_");
   *outputFile << "\n\tjmp " << item->name;
 }
@@ -324,8 +324,6 @@ int main(int argc, char **argv) {
   }
   outputFile << "\n";
   outputFile.close();
-
-
 
   return 0;
 }
