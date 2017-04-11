@@ -31,9 +31,33 @@ std::map<std::string, std::string> init_op_map() {
   return op_map;
 }
 
+std::map<std::string, std::string> init_cmp_reg_map() {
+  std::map<std::string, std::string> cmp_reg_map;
+  cmp_reg_map["r8"] = "r8b";
+  cmp_reg_map["r9"] = "r9b";
+  cmp_reg_map["r10"] = "r10b";
+  cmp_reg_map["r11"] = "r11b";
+  cmp_reg_map["r12"] = "r12b";
+  cmp_reg_map["r13"] = "r13b";
+  cmp_reg_map["r14"] = "r14b";
+  cmp_reg_map["r15"] = "r15b";
+  cmp_reg_map["rax"] = "al";
+  cmp_reg_map["rbp"] = "bpl";
+  cmp_reg_map["rbx"] = "bl";
+  cmp_reg_map["rcx"] = "cl";
+  cmp_reg_map["rdi"] = "dil";
+  cmp_reg_map["rdx"] = "dl";
+  cmp_reg_map["rsi"] = "sil";
+  return cmp_reg_map;
+}
+
 void return_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-  if (f->locals > 0) {
-    *outputFile << "\n\taddq $" << std::to_string(f->locals * 8) << ", %rsp";
+  int offset = f->locals;
+  if (f->arguments > 6) {
+    offset += f->arguments - 6;
+  }
+  if (offset > 0) {
+    *outputFile << "\n\taddq $" << std::to_string(offset * 8) << ", %rsp";
   }
   *outputFile << "\n\tretq";
 }
@@ -113,58 +137,54 @@ void cisc_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
   // i
 }
 
-//
-// void one_item_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-//   switch (i->type) {
-//     case 0:
-//             break;
-//
-//     case 1:
-//             break;
-//   }
-// }
-//
-// void two_item_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-//   switch (i->type) {
-//     case 0:
-//             break;
-//
-//     case 1:
-//             break;
-//   }
-// }
-//
-// void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-//   switch (i->type) {
-//     case 0:
-//             break;
-//
-//     case 1:
-//             break;
-//   }
-// }
-//
-// void cjump_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-//   switch (i->type) {
-//     case 0:
-//             break;
-//
-//     case 1:
-//             break;
-//   }
-// }
-//
-// void CISC_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-//   switch (i->type) {
-//     case 0:
-//             break;
-//
-//     case 1:
-//             break;
-//   }
-// }
+void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> cmp_reg_map) {
+  L1::Item *dest = i->items.at(0);
 
-
+  L1::Item *cmpl = i->items.at(1);
+  std::string op = i->op;
+  L1::Item *cmpr = i->items.at(2);
+  if (cmpl->type == L1::ITEM_NUMBER && cmpr->type == L1::ITEM_NUMBER) {
+    std::string res;
+    if (op == "<") {
+      res = cmpl->value < cmpr->value ? "1" : "0";
+    } else if (op == "<=") {
+      res = cmpl->value <= cmpr->value ? "1" : "0";
+    } else { // if (op == "=")
+      res = cmpl->value == cmpr->value ? "1" : "0";
+    }
+    *outputFile << "\n\tmovq $" << res << ", %" << dest->name;
+  } else if (cmpl->type == L1::ITEM_NUMBER) { // do something, because cmpl must be a register
+    std::string setop;
+    if (op == "<") {
+      setop = "g";
+    } else if (op == "<=") {
+      setop = "ge";
+    } else { // if (op == "=")
+      setop = "e";
+    }
+    *outputFile << "\n\tcmpq $" << std::to_string(cmpl->value) << ", %" << cmpr->name;
+    *outputFile << "\n\tset" << setop << " %" << cmp_reg_map[dest->name];
+    *outputFile << "\n\tmovzbq %" << cmp_reg_map[dest->name] << ", %" << dest->name;
+  } else { // just do the normal stuff
+    std::string setop;
+    if (op == "<") {
+      setop = "l";
+    } else if (op == "<=") {
+      setop = "le";
+    } else { // if (op == "=")
+      setop = "e";
+    }
+    std::string cmpql;
+    if (cmpr->type == L1::ITEM_NUMBER) {
+      cmpql = "$" + std::to_string(cmpr->value);
+    } else {
+      cmpql = "%" + cmpr->name;
+    }
+    *outputFile << "\n\tcmpq " << cmpql << ", %" << cmpl->name;
+    *outputFile << "\n\tset" << setop << " %" << cmp_reg_map[dest->name];
+    *outputFile << "\n\tmovzbq %" << cmp_reg_map[dest->name] << ", %" << dest->name;
+  }
+}
 
 int main(int argc, char **argv) {
   bool verbose;
@@ -204,16 +224,14 @@ int main(int argc, char **argv) {
   // cout << outputFileName;
   // outputFileName = malloc("bin/" + argv[optind] + ".S");
   outputFile.open("prog.S");
-  outputFile << ".text\n\t.globl go\ngo:\n\tpushq\t%rbx\n\tpushq\t%rbp\n\tpushq\t%r12\n\tpushq\t%r13\n\tpushq\t%r14\n\tpushq\t%r15\n\n";
-  outputFile << "\tcall _" << p.entryPointLabel << "\n\n";
-  outputFile << "\tpopq\t%r15\n\tpopq\t%r14\n\tpopq\t%r13\n\tpopq\t%r12\n\tpopq\t%rbp\n\tpopq\t%rbx\n\tretq";
-  // outputFile << "_myGo:\n\tmovq $3, %rdi\n\tcall printf\n\tretq";
+  outputFile << ".text\n\t.globl go\ngo:\n\tpushq\t%rbx\n\tpushq\t%rbp\n\tpushq\t%r12\n\tpushq\t%r13\n\tpushq\t%r14\n\tpushq\t%r15\n\n\tcall _" << p.entryPointLabel << "\n\n\tpopq\t%r15\n\tpopq\t%r14\n\tpopq\t%r13\n\tpopq\t%r12\n\tpopq\t%rbp\n\tpopq\t%rbx\n\tretq";
 
   /* Generate x86_64 code
    */
   cout << endl << "Program: " << p.entryPointLabel << endl;
 
   std::map<std::string, std::string> op_map = init_op_map();
+  std::map<std::string, std::string> cmp_reg_map = init_cmp_reg_map();
 
   for (auto f : p.functions) {
     outputFile << "\n\n_" << f->name << ":";
@@ -236,6 +254,8 @@ int main(int argc, char **argv) {
         case L1::INS_INC_DEC: inc_dec_ins(& outputFile, i, f, op_map);
                 break;
         case L1::INS_CISC: cisc_ins(& outputFile, i, f);
+                break;
+        case L1::INS_CMP: cmp_ins(& outputFile, i, f, cmp_reg_map);
                 break;
         // case 2: two_item_ins(& outputFile, i, f);
         //         break;

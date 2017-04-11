@@ -180,10 +180,10 @@ namespace L1 {
       pegtl::string< '>', '>', '=' >
     > {};
 
-  struct L1_cmp:
+  struct cmp:
     pegtl::sor<
-      pegtl::string< '<'>,
       pegtl::string< '<', '=' >,
+      pegtl::string< '<'>,
       pegtl::string< '=' >
     > {};
 
@@ -264,7 +264,15 @@ namespace L1 {
         w,
         seps,
         pegtl::sor<
-          pegtl::seq< left_arrow, seps, pegtl::sor< s, L1_mem_x_M > >,
+          pegtl::seq<
+            left_arrow,
+            seps,
+            pegtl::sor<
+              pegtl::seq< t, seps, cmp, seps, t >,
+              s,
+              L1_mem_x_M
+            >
+          >,
           pegtl::seq< aop, seps, t >,
           pegtl::seq< sop, seps, pegtl::sor< rcx, N > >,
           pegtl::seq< plus_minus_op, seps, L1_mem_x_M >,
@@ -378,7 +386,7 @@ namespace L1 {
   /*
    * Data structures required to parse
    */
-  std::vector<L1_item> parsed_registers;
+  std::vector< L1_item > parsed_registers;
 
 
   /*
@@ -394,7 +402,7 @@ namespace L1 {
   //   }
   //   return strings;
   // }
-  vector<std::string> split_by_space(std::string str) {
+  vector< std::string > split_by_space(std::string str) {
     // string str("Split me by whitespaces");
     std::string buf; // Have a buffer string
     std::stringstream ss(str); // Insert the string into a stream
@@ -468,12 +476,12 @@ namespace L1 {
       newIns->type = L1::INS_MEM_OR_W_START;
 
       if (v.size() == 3) { // no mem, two op
-        cout << "tinkering " << v.at(0) << " " << v.at(1) << " " << v.at(2) << endl;
+        cout << "tinkering no mem assign: " << v.at(0) << " " << v.at(1) << " " << v.at(2) << endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item(v.at(2)));
         newIns->op = v.at(1);
 
-      } else if (v.size() == 2) { //
+      } else if (v.size() == 2) { // INS_INC_DEC
         newIns->type = L1::INS_INC_DEC;
 
         cout << "tinkering L1_ins_inc_dec: " << v.at(0) << v.at(1) << endl;
@@ -489,19 +497,24 @@ namespace L1 {
         newIns->items.push_back(new_item2(v.at(2), v.at(3)));
 
         cout << "tinkering L1_ins_cisc: " << in.string() << endl;
-      }
-       else if (v.at(0) == "mem") { // left mem, two op
+      } else if (v.at(0) == "mem") { // left mem, two op
         // v.at(2).pop_back();
-        cout << "tinkering (" << v.at(1) << " - " << v.at(2) << ") " << v.at(3) << " " << v.at(4) << endl;
+        cout << "tinkering left mem (" << v.at(1) << " - " << v.at(2) << ") " << v.at(3) << " " << v.at(4) << endl;
         newIns->items.push_back(L1::new_item2(v.at(1), v.at(2)));
         newIns->items.push_back(L1::new_item(v.at(4)));
         newIns->op = v.at(3);
-      }
-      else { // right mem two op
-        cout << "tinkering (" << v.at(0) << " " << v.at(1) << " (" << v.at(3) << " - " << v.at(4) << ")" << endl;
+      } else if (v.at(2) == "mem") { // right mem two op
+        cout << "tinkering right mem (" << v.at(0) << " " << v.at(1) << " (" << v.at(3) << " - " << v.at(4) << ")" << endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item2(v.at(3), v.at(4)));
         newIns->op = v.at(1);
+      } else { // cmp, 5 cmp
+        cout << "tinkering cmp " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
+        newIns->type = L1::INS_CMP;
+        newIns->items.push_back(L1::new_item(v.at(0)));
+        newIns->items.push_back(L1::new_item(v.at(2)));
+        newIns->items.push_back(L1::new_item(v.at(4)));
+        newIns->op = v.at(3);
       }
       currentF->instructions.push_back(newIns);
       v.clear();
@@ -620,6 +633,12 @@ namespace L1 {
   };
 
   template<> struct action < call > {
+    static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
+      v.push_back(in.string());
+    }
+  };
+
+  template<> struct action < cmp > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
     }

@@ -19,18 +19,9 @@ go:
 	retq
 
 _go:
-	movq $5, %rdi
-	inc $rdi
-	lea(%rdi, %rdi, 8), %rdi
-	movq $_testFunction_ret, -8(%rsp)
 	subq $8, %rsp
-	jmp _testFunction
-
-_testFunction_ret:
-	movq %rax, %rdi
-	call print
-	retq
-
-_testFunction:
-	movq %rdi, %rax
+	cmpq %rbx, %rax
+	setle %dil
+	movzbq %dil, %rdi
+	addq $8, %rsp
 	retq
