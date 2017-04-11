@@ -79,7 +79,7 @@ _printData:
 _wrong:
 	movq %r12, %rdi
 	movq %r13, %rsi
-	call array_error
+	call w
 
 _correct:
 	movq %r13, %r15
