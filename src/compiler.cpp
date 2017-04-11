@@ -133,7 +133,7 @@ void inc_dec_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function *
 }
 
 void cisc_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
-  *outputFile << "\n\tlea(%" << i->items.at(1)->name << ", %" << i->items.at(2)->name << ", " << std::to_string(i->items.at(2)->value) << "), %" << i->items.at(0)->name;
+  *outputFile << "\n\tlea (%" << i->items.at(1)->name << ", %" << i->items.at(2)->name << ", " << std::to_string(i->items.at(2)->value) << "), %" << i->items.at(0)->name;
   // i
 }
 

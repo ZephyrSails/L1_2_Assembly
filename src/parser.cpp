@@ -799,9 +799,7 @@ namespace L1 {
     /*
      * Check the grammar for some possible issues.
      */
-    cout << "??\n";
     pegtl::analyze< L1::grammar >();
-    cout << "???\n";
     /*
      * Parse.
      */

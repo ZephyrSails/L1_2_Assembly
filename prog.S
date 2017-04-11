@@ -19,9 +19,7 @@ go:
 	retq
 
 _go:
-	movq $5, %rdi
-	movq $5, %rsi
-	call allocate
-	movq %rax, %rdi
-	call print
+	movq $1, %rdi
+	movq $2, %rsi
+	lea(%rdi, %rsi, 4), %rax
 	retq
