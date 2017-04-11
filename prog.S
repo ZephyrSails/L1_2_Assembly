@@ -19,7 +19,7 @@ go:
 	retq
 
 _go:
-	movq $1, %rdi
-	movq $2, %rsi
-	lea(%rdi, %rsi, 4), %rax
+	movq $2, %rdi
+	inc $rdi
+	call print
 	retq

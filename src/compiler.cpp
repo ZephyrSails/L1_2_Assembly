@@ -31,24 +31,24 @@ std::map<std::string, std::string> init_op_map() {
   return op_map;
 }
 
-std::map<std::string, std::string> init_cmp_reg_map() {
-  std::map<std::string, std::string> cmp_reg_map;
-  cmp_reg_map["r8"] = "r8b";
-  cmp_reg_map["r9"] = "r9b";
-  cmp_reg_map["r10"] = "r10b";
-  cmp_reg_map["r11"] = "r11b";
-  cmp_reg_map["r12"] = "r12b";
-  cmp_reg_map["r13"] = "r13b";
-  cmp_reg_map["r14"] = "r14b";
-  cmp_reg_map["r15"] = "r15b";
-  cmp_reg_map["rax"] = "al";
-  cmp_reg_map["rbp"] = "bpl";
-  cmp_reg_map["rbx"] = "bl";
-  cmp_reg_map["rcx"] = "cl";
-  cmp_reg_map["rdi"] = "dil";
-  cmp_reg_map["rdx"] = "dl";
-  cmp_reg_map["rsi"] = "sil";
-  return cmp_reg_map;
+std::map<std::string, std::string> init_eight_bit_reg_map() {
+  std::map<std::string, std::string> eight_bit_reg_map;
+  eight_bit_reg_map["r8"] = "r8b";
+  eight_bit_reg_map["r9"] = "r9b";
+  eight_bit_reg_map["r10"] = "r10b";
+  eight_bit_reg_map["r11"] = "r11b";
+  eight_bit_reg_map["r12"] = "r12b";
+  eight_bit_reg_map["r13"] = "r13b";
+  eight_bit_reg_map["r14"] = "r14b";
+  eight_bit_reg_map["r15"] = "r15b";
+  eight_bit_reg_map["rax"] = "al";
+  eight_bit_reg_map["rbp"] = "bpl";
+  eight_bit_reg_map["rbx"] = "bl";
+  eight_bit_reg_map["rcx"] = "cl";
+  eight_bit_reg_map["rdi"] = "dil";
+  eight_bit_reg_map["rdx"] = "dl";
+  eight_bit_reg_map["rsi"] = "sil";
+  return eight_bit_reg_map;
 }
 
 void return_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
@@ -90,10 +90,20 @@ std::string item2string(L1::Item * i, bool isLeft = false) {
   return str;
 }
 
-void mem_or_w_start_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
+void mem_or_w_start_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map, std::map<std::string, std::string> eight_bit_reg_map) {
   L1::Item * left_item = i->items.at(1);
 
-  *outputFile << "\n\t" << op_map[i->op] << " " << item2string(left_item, true) << ", " << item2string(i->items.at(0));
+  if (op_map[i->op] == "<<=" || op_map[i->op] == ">>=") { // dealing with sop
+    std::string source = item2string(left_item, true);
+    if (source.at(0) == '%') {
+      source.erase(0, 1);
+      source = eight_bit_reg_map[source];
+      source.insert(0, "%");
+    }
+    *outputFile << "\n\t" << op_map[i->op] << " " << source << ", " << item2string(i->items.at(0));
+  } else {
+    *outputFile << "\n\t" << op_map[i->op] << " " << item2string(left_item, true) << ", " << item2string(i->items.at(0));
+  }
 }
 
 void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
@@ -129,7 +139,7 @@ void goto_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
 }
 
 void inc_dec_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
-  *outputFile << "\n\t" << op_map[i->op] << " $" << i->items.at(0)->name;
+  *outputFile << "\n\t" << op_map[i->op] << " %" << i->items.at(0)->name;
 }
 
 void cisc_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
@@ -137,7 +147,7 @@ void cisc_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
   // i
 }
 
-void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> cmp_reg_map) {
+void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> eight_bit_reg_map) {
   L1::Item *dest = i->items.at(0);
 
   L1::Item *cmpl = i->items.at(1);
@@ -163,8 +173,8 @@ void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, 
       setop = "e";
     }
     *outputFile << "\n\tcmpq $" << std::to_string(cmpl->value) << ", %" << cmpr->name;
-    *outputFile << "\n\tset" << setop << " %" << cmp_reg_map[dest->name];
-    *outputFile << "\n\tmovzbq %" << cmp_reg_map[dest->name] << ", %" << dest->name;
+    *outputFile << "\n\tset" << setop << " %" << eight_bit_reg_map[dest->name];
+    *outputFile << "\n\tmovzbq %" << eight_bit_reg_map[dest->name] << ", %" << dest->name;
   } else { // just do the normal stuff
     std::string setop;
     if (op == "<") {
@@ -181,12 +191,12 @@ void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, 
       cmpql = "%" + cmpr->name;
     }
     *outputFile << "\n\tcmpq " << cmpql << ", %" << cmpl->name;
-    *outputFile << "\n\tset" << setop << " %" << cmp_reg_map[dest->name];
-    *outputFile << "\n\tmovzbq %" << cmp_reg_map[dest->name] << ", %" << dest->name;
+    *outputFile << "\n\tset" << setop << " %" << eight_bit_reg_map[dest->name];
+    *outputFile << "\n\tmovzbq %" << eight_bit_reg_map[dest->name] << ", %" << dest->name;
   }
 }
 
-void cjump_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> cmp_reg_map) {
+void cjump_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> eight_bit_reg_map) {
   L1::Item *cmpl = i->items.at(0);
   std::string op = i->op;
   L1::Item *cmpr = i->items.at(1);
@@ -282,7 +292,7 @@ int main(int argc, char **argv) {
   cout << argv[optind] << endl;
 
   std::map<std::string, std::string> op_map = init_op_map();
-  std::map<std::string, std::string> cmp_reg_map = init_cmp_reg_map();
+  std::map<std::string, std::string> eight_bit_reg_map = init_eight_bit_reg_map();
 
   for (auto f : p.functions) {
     outputFile << "\n\n_" << f->name << ":";
@@ -296,7 +306,7 @@ int main(int argc, char **argv) {
                 break;
         case L1::INS_LABEL: label_ins(& outputFile, i, f);
                 break;
-        case L1::INS_MEM_OR_W_START: mem_or_w_start_ins(& outputFile, i, f, op_map);
+        case L1::INS_MEM_OR_W_START: mem_or_w_start_ins(& outputFile, i, f, op_map, eight_bit_reg_map);
                 break;
         case L1::INS_CALL: call_ins(& outputFile, i, f);
                 break;
@@ -306,9 +316,9 @@ int main(int argc, char **argv) {
                 break;
         case L1::INS_CISC: cisc_ins(& outputFile, i, f);
                 break;
-        case L1::INS_CMP: cmp_ins(& outputFile, i, f, cmp_reg_map);
+        case L1::INS_CMP: cmp_ins(& outputFile, i, f, eight_bit_reg_map);
                 break;
-        case L1::INS_CJUMP: cjump_ins(& outputFile, i, f, cmp_reg_map);
+        case L1::INS_CJUMP: cjump_ins(& outputFile, i, f, eight_bit_reg_map);
         // case 2: two_item_ins(& outputFile, i, f);
         //         break;
         // case 3: cmp_ins(& outputFile, i, f);
