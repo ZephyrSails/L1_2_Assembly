@@ -232,6 +232,12 @@ namespace L1 {
   struct E:
     L1_E {};
 
+  struct inc_dec:
+    pegtl::sor<
+      pegtl::string < '+', '+' >,
+      pegtl::string < '-', '-' >
+    > {};
+
   struct L1_mem_x_M:
     pegtl::seq<
       pegtl::one< '(' >,
@@ -252,19 +258,7 @@ namespace L1 {
   struct call:
     pegtl::string < 'c', 'a', 'l', 'l' > {};
 
-  // struct L1_ins_two_op:
-    // pegtl::sor<
-    //   pegtl::seq< w, seps, left_arrow, seps, s >,
-    //   pegtl::seq< w, seps, left_arrow, seps, L1_mem_x_M >,
-    //   pegtl::seq< L1_mem_x_M, seps, left_arrow, seps, s >,
-    //   pegtl::seq< w, seps, aop, seps, t >,
-    //   pegtl::seq< w, seps, sop, seps, rcx >,
-    //   pegtl::seq< w, seps, sop, seps, N >,
-    //   pegtl::seq< L1_mem_x_M, seps, plus_minus_op, seps, t >,
-    //   pegtl::seq< w, seps, plus_minus_op, seps, L1_mem_x_M >
-    // > {};
-
-  struct L1_ins_two_op:
+  struct L1_ins_mem_or_w_start:
     pegtl::sor<
       pegtl::seq<
         w,
@@ -273,7 +267,9 @@ namespace L1 {
           pegtl::seq< left_arrow, seps, pegtl::sor< s, L1_mem_x_M > >,
           pegtl::seq< aop, seps, t >,
           pegtl::seq< sop, seps, pegtl::sor< rcx, N > >,
-          pegtl::seq< plus_minus_op, seps, L1_mem_x_M >
+          pegtl::seq< plus_minus_op, seps, L1_mem_x_M >,
+          inc_dec,
+          pegtl::seq< pegtl::one< '@' >, seps, w, seps, w, seps, E >
         >
       >,
       pegtl::seq<
@@ -304,29 +300,18 @@ namespace L1 {
       N
     > {};
 
-  struct inc_dec:
-    pegtl::sor<
-      pegtl::string < '+', '+' >,
-      pegtl::string < '-', '-' >
-    > {};
+  // struct L1_ins_inc_dec:
+  //   pegtl::seq< inc_dec_w, seps, inc_dec > {};
 
-  struct L1_ins_inc_dec:
-    pegtl::sor<
-      pegtl::seq< seps, w, seps, inc_dec, seps >,
-      pegtl::seq< seps, w, seps, inc_dec, seps >
-    > {};
-
-  struct L1_ins_cisc:
-    pegtl::seq< seps, w, seps, pegtl::one< '@' >, seps, w, seps, w, seps, E, seps > {};
-
-
+  // struct L1_ins_cisc:
+  //   pegtl::seq< w, seps, pegtl::one< '@' >, seps, w, seps, w, seps, E > {};
 
   struct L1_instruction:
     pegtl::sor<
       pegtl::seq<
         pegtl::one<'('>,
         pegtl::sor<
-          L1_ins_two_op
+          L1_ins_mem_or_w_start
           // pegtl::seq< seps, L1_w, seps, left_arrow, seps, L1_t_cmp_t >, // ?
           // pegtl::seq< seps, pegtl::string< 'c', 'j', 'u', 'm', 'p' >, seps, L1_t_cmp_t, seps, label, label > //
         >,
@@ -339,9 +324,8 @@ namespace L1 {
         pegtl::sor<
           L1_ins_goto,
           L1_ins_return,
-          L1_ins_call_func,
-          L1_ins_inc_dec,
-          L1_ins_cisc
+          L1_ins_call_func
+          // L1_ins_cisc
         >,
         seps,
         pegtl::one<')'>
@@ -477,27 +461,43 @@ namespace L1 {
     }
   };
 
-  template<> struct action < L1_ins_two_op > {
+  template<> struct action < L1_ins_mem_or_w_start > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       L1::Function *currentF = p.functions.back();
       L1::Instruction *newIns = new L1::Instruction();
-      newIns->type = L1::INS_TWO_OP;
+      newIns->type = L1::INS_MEM_OR_W_START;
 
-      if (v.size() == 3) { // no mem assignment
+      if (v.size() == 3) { // no mem, two op
         cout << "tinkering " << v.at(0) << " " << v.at(1) << " " << v.at(2) << endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item(v.at(2)));
         newIns->op = v.at(1);
 
-      } else if (v.at(0) == "mem") { // left mem assign
+      } else if (v.size() == 2) { //
+        newIns->type = L1::INS_INC_DEC;
+
+        cout << "tinkering L1_ins_inc_dec: " << v.at(0) << v.at(1) << endl;
+        newIns->op = v.at(1);
+        newIns->items.push_back(new_item(v.at(0)));
+
+      } else if (v.size() == 4) { // CISC
+        newIns->type = L1::INS_CISC;
+
+        cout << "tinkering CISC: " << v.at(0) << " @ " << v.at(1) << " " << v.at(2) << " " << v.at(3) << endl;
+        newIns->items.push_back(new_item(v.at(0)));
+        newIns->items.push_back(new_item(v.at(1)));
+        newIns->items.push_back(new_item2(v.at(2), v.at(3)));
+
+        cout << "tinkering L1_ins_cisc: " << in.string() << endl;
+      }
+       else if (v.at(0) == "mem") { // left mem, two op
         // v.at(2).pop_back();
         cout << "tinkering (" << v.at(1) << " - " << v.at(2) << ") " << v.at(3) << " " << v.at(4) << endl;
         newIns->items.push_back(L1::new_item2(v.at(1), v.at(2)));
         newIns->items.push_back(L1::new_item(v.at(4)));
         newIns->op = v.at(3);
       }
-      else { // right mem op
-        // v.at(4).pop_back();
+      else { // right mem two op
         cout << "tinkering (" << v.at(0) << " " << v.at(1) << " (" << v.at(3) << " - " << v.at(4) << ")" << endl;
         newIns->items.push_back(L1::new_item(v.at(0)));
         newIns->items.push_back(L1::new_item2(v.at(3), v.at(4)));
@@ -575,42 +575,31 @@ namespace L1 {
     }
   };
 
-  template<> struct action < L1_ins_inc_dec > {
+  template<> struct action < inc_dec > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
-      L1::Function *currentF = p.functions.back();
-      L1::Instruction *newIns = new L1::Instruction();
-      newIns->type = L1::INS_INC_DEC;
-
-      newIns->op = v.at(1);
-      L1::Item *newItem = new L1::Item();
-      newIns->items.push_back(new_item(v.at(0)));
-
-      cout << "tinkering L1_ins_inc_dec: " << in.string() << endl;
-
-      currentF->instructions.push_back(newIns);
-      v.clear();
+      v.push_back(in.string());
     }
   };
 
-  template<> struct action < L1_ins_cisc > {
-    static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
-      L1::Function *currentF = p.functions.back();
-      L1::Instruction *newIns = new L1::Instruction();
-      newIns->type = L1::INS_INC_CISC;
-
-      // vector<std::string> tokens = split_by_space(in.string());
-
-      L1::Item *newItem = new L1::Item();
-      newIns->items.push_back(new_item(v.at(0)));
-      newIns->items.push_back(new_item(v.at(2)));
-      newIns->items.push_back(new_item2(v.at(3), v.at(4)));
-
-      cout << "tinkering L1_ins_cisc: " << in.string() << endl;
-
-      currentF->instructions.push_back(newIns);
-      v.clear();
-    }
-  };
+  // template<> struct action < L1_ins_cisc > {
+  //   static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
+  //     L1::Function *currentF = p.functions.back();
+  //     L1::Instruction *newIns = new L1::Instruction();
+  //     newIns->type = L1::INS_CISC;
+  //
+  //     // vector<std::string> tokens = split_by_space(in.string());
+  //
+  //     L1::Item *newItem = new L1::Item();
+  //     newIns->items.push_back(new_item(v.at(0)));
+  //     newIns->items.push_back(new_item(v.at(2)));
+  //     newIns->items.push_back(new_item2(v.at(3), v.at(4)));
+  //
+  //     cout << "tinkering L1_ins_cisc: " << in.string() << endl;
+  //
+  //     currentF->instructions.push_back(newIns);
+  //     v.clear();
+  //   }
+  // };
 
   // struct L1_ins_two_op:
   //   pegtl::sor<
@@ -709,12 +698,6 @@ namespace L1 {
   };
 
   template<> struct action < M > {
-    static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
-      v.push_back(in.string());
-    }
-  };
-
-  template<> struct action < inc_dec > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
     }

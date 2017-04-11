@@ -66,9 +66,8 @@ std::string item2string(L1::Item * i, bool isLeft = false) {
   return str;
 }
 
-void L1_ins_two_op(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
+void mem_or_w_start_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
   L1::Item * left_item = i->items.at(1);
-
 
   *outputFile << "\n\t" << op_map[i->op] << " " << item2string(left_item, true) << ", " << item2string(i->items.at(0));
 }
@@ -106,10 +105,11 @@ void goto_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
 }
 
 void inc_dec_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map) {
-  *outputFile << "\n\t" << op_map[i->op] << " " << i->items.at(0)->name;
+  *outputFile << "\n\t" << op_map[i->op] << " $" << i->items.at(0)->name;
 }
 
 void cisc_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f) {
+  *outputFile << "\n\tlea(%" << i->items.at(1)->name << ", %" << i->items.at(2)->name << ", " << std::to_string(i->items.at(2)->value) << "), %" << i->items.at(0)->name;
   // i
 }
 
@@ -227,13 +227,15 @@ int main(int argc, char **argv) {
                 break;
         case L1::INS_LABEL: label_ins(& outputFile, i, f);
                 break;
-        case L1::INS_TWO_OP: L1_ins_two_op(& outputFile, i, f, op_map);
+        case L1::INS_MEM_OR_W_START: mem_or_w_start_ins(& outputFile, i, f, op_map);
                 break;
         case L1::INS_CALL: call_ins(& outputFile, i, f);
                 break;
         case L1::INS_GOTO: goto_ins(& outputFile, i, f);
                 break;
         case L1::INS_INC_DEC: inc_dec_ins(& outputFile, i, f, op_map);
+                break;
+        case L1::INS_CISC: cisc_ins(& outputFile, i, f);
                 break;
         // case 2: two_item_ins(& outputFile, i, f);
         //         break;
