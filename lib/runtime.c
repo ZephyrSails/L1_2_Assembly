@@ -4,7 +4,7 @@
  *
  * L1 language runtime
  *
- * For proper GC behavior, L1 programs 
+ * For proper GC behavior, L1 programs
  * should adhere to the following constraints:
  * 1. immediately before each call to allocate(),
  *    the callee-save registers ebx/edi/esi
@@ -135,7 +135,7 @@ int64_t *gc_copy(int64_t *old)  {
       (void**)old >= heap2.data + heap2.words_allocated) {
       return old;
    }
-   
+
    // if not pointing at a valid heap object, return input value
    valid_index = (int64_t)((void**)old - heap2.data);
    is_valid = heap2.valid[valid_index];
@@ -311,7 +311,7 @@ asm(
    "popl %edx\n"  // original return addr
    "popl %ecx\n"  // junk
    "pushl %edx\n"  // restore return addr
-   "ret\n" 
+   "ret\n"
    */
 );
 
@@ -326,7 +326,7 @@ void* allocate_helper(int64_t fw_size, int64_t *fw_fill, int64_t *rsp)
    int64_t *ret;
 
    if(!(fw_size & 1)) {
-      printf("allocate called with size input that was not an encoded integer, %" 
+      printf("allocate called with size input that was not an encoded integer, %"
 	     PRId64
 	     "\n",
              fw_size);
@@ -402,7 +402,7 @@ void* allocate_helper(int64_t fw_size, int64_t *fw_fill, int64_t *rsp)
 }
 
 /*
- * The "array-error" runtime function
+ * The "array_error" runtime function
  */
 int array_error(int64_t *array, int64_t fw_x) {
    printf("attempted to use position %" PRId64
@@ -427,7 +427,7 @@ int main() {
 
    // Move esp into the bottom-of-stack pointer.
    // The "go" function's boilerplate, in conjunction
-   // with the C calling convention dictates that 
+   // with the C calling convention dictates that
    // we need 7 words to be added to the stack
    // before the body of "go" actually happens
    asm ("movq %%rsp, %%rax;"
@@ -440,7 +440,7 @@ int main() {
       : "=m"(stack) // outputs
       :             // inputs (none)
       : "%rax", "%rbx", "%rdi", "%rsi" // clobbered registers (eax)
-   );  
+   );
 
 #ifdef GC_DEBUG
    printf("runtime.c: main(): initial ESP value = %p (%" PRId64 ")\n", stack, (int64_t)stack);

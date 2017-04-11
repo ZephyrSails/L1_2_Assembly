@@ -93,7 +93,7 @@ std::string item2string(L1::Item * i, bool isLeft = false) {
 void mem_or_w_start_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map, std::map<std::string, std::string> eight_bit_reg_map) {
   L1::Item * left_item = i->items.at(1);
 
-  if (op_map[i->op] == "<<=" || op_map[i->op] == ">>=") { // dealing with sop
+  if (i->op == "<<=" || i->op == ">>=") { // dealing with sop
     std::string source = item2string(left_item, true);
     if (source.at(0) == '%') {
       source.erase(0, 1);
@@ -126,6 +126,9 @@ void call_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f)
     *outputFile << "\n\tsubq $" << std::to_string(rsp_offset) << ", %rsp";
     *outputFile << "\n\tjmp " << item->name;
   } else { // system func
+    if (item->name == "array-error") {
+      item->name = "array_error";
+    }
     // cout << "\n--------- value <= 6";
     *outputFile << "\n\tcall " << item->name;
   }
