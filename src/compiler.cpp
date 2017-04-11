@@ -186,6 +186,56 @@ void cmp_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, 
   }
 }
 
+void cjump_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> cmp_reg_map) {
+  L1::Item *cmpl = i->items.at(0);
+  std::string op = i->op;
+  L1::Item *cmpr = i->items.at(1);
+  std::string labelT = i->items.at(2)->name;
+  std::string labelF = i->items.at(3)->name;
+
+  if (cmpl->type == L1::ITEM_NUMBER && cmpr->type == L1::ITEM_NUMBER) {
+    std::string cjumpDest;
+    if (op == "<") {
+      cjumpDest = cmpl->value < cmpr->value ? labelT : labelF;
+    } else if (op == "<=") {
+      cjumpDest = cmpl->value <= cmpr->value ? labelT : labelF;
+    } else { // if (op == "=")
+      cjumpDest = cmpl->value == cmpr->value ? labelT : labelF;
+    }
+    *outputFile << "\n\tjmp _" << cjumpDest;
+  } else if (cmpl->type == L1::ITEM_NUMBER) { // do something, because cmpl must be a register
+    std::string jop;
+    if (op == "<") {
+      jop = "g";
+    } else if (op == "<=") {
+      jop = "ge";
+    } else { // if (op == "=")
+      jop = "e";
+    }
+    *outputFile << "\n\tcmpq $" << std::to_string(cmpl->value) << ", %" << cmpr->name;
+    *outputFile << "\n\tj" << jop << " _" << labelT;
+    *outputFile << "\n\tjmp _" << labelF;
+  } else { // just do the normal stuff
+    std::string jop;
+    if (op == "<") {
+      jop = "l";
+    } else if (op == "<=") {
+      jop = "le";
+    } else { // if (op == "=")
+      jop = "e";
+    }
+    std::string cmpql;
+    if (cmpr->type == L1::ITEM_NUMBER) {
+      cmpql = "$" + std::to_string(cmpr->value);
+    } else {
+      cmpql = "%" + cmpr->name;
+    }
+    *outputFile << "\n\tcmpq " << cmpql << ", %" << cmpl->name;
+    *outputFile << "\n\tj" << jop << " _" << labelT;
+    *outputFile << "\n\tjmp _" << labelF;
+  }
+}
+
 int main(int argc, char **argv) {
   bool verbose;
 
@@ -257,6 +307,7 @@ int main(int argc, char **argv) {
                 break;
         case L1::INS_CMP: cmp_ins(& outputFile, i, f, cmp_reg_map);
                 break;
+        case L1::INS_CJUMP: cjump_ins(& outputFile, i, f, cmp_reg_map);
         // case 2: two_item_ins(& outputFile, i, f);
         //         break;
         // case 3: cmp_ins(& outputFile, i, f);

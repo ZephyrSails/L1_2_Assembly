@@ -19,9 +19,12 @@ go:
 	retq
 
 _go:
-	subq $8, %rsp
-	cmpq %rbx, %rax
-	setle %dil
-	movzbq %dil, %rdi
-	addq $8, %rsp
+	movq $7, %rdi
+	movq $7, %rsi
+	call allocate
+	movq %rax, %rsi
+	movq $5, %rdi
+	call allocate
+	movq %rax, %rdi
+	call print
 	retq
