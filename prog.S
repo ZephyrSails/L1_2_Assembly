@@ -20,7 +20,6 @@ go:
 
 _go:
 	movq $5, %rdi
-	movq -8(%rsp), %rax
 	movq $_testFunction_ret, -8(%rsp)
 	subq $8, %rsp
 	jmp _testFunction
