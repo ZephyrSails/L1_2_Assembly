@@ -90,6 +90,10 @@ std::string item2string(L1::Item * i, bool isLeft = false) {
   return str;
 }
 
+
+//
+// the function with _ins suffix convert different instruction object to assembly.
+//
 void mem_or_w_start_ins(std::ofstream * outputFile, L1::Instruction * i, L1::Function * f, std::map<std::string, std::string> op_map, std::map<std::string, std::string> eight_bit_reg_map) {
   L1::Item * left_item = i->items.at(1);
 
@@ -270,22 +274,12 @@ int main(int argc, char **argv) {
     }
   }
 
-  // cout << "Init done.\n";
   /* Parse the L1 program.
    */
   L1::Program p = L1::L1_parse_file(argv[optind]);
 
-  // cout << "lalalalalal" << argv[optind] << endl;
-  // init .S header
   std::ofstream outputFile;
 
-  // std::string * fileName = new std::string();
-  // std::string outputFileName;
-  // outputFileName += "bin/";
-  // outputFileName += argv[optind];
-  // outputFileName += ".S";
-  // cout << outputFileName;
-  // outputFileName = malloc("bin/" + argv[optind] + ".S");
   outputFile.open("prog.S");
   outputFile << ".text\n\t.globl go\ngo:\n\tpushq\t%rbx\n\tpushq\t%rbp\n\tpushq\t%r12\n\tpushq\t%r13\n\tpushq\t%r14\n\tpushq\t%r15\n\n\tcall _" << p.entryPointLabel << "\n\n\tpopq\t%r15\n\tpopq\t%r14\n\tpopq\t%r13\n\tpopq\t%r12\n\tpopq\t%rbp\n\tpopq\t%rbx\n\tretq";
 
@@ -322,17 +316,8 @@ int main(int argc, char **argv) {
         case L1::INS_CMP: cmp_ins(& outputFile, i, f, eight_bit_reg_map);
                 break;
         case L1::INS_CJUMP: cjump_ins(& outputFile, i, f, eight_bit_reg_map);
-        // case 2: two_item_ins(& outputFile, i, f);
-        //         break;
-        // case 3: cmp_ins(& outputFile, i, f);
-        //         break;
-        // case 4: cjump_ins(& outputFile, i, f);
-        //         break;
-        // case 5: CISC_ins(& outputFile, i, f);
-        //         break;
       }
     }
-
     // cout << f->name << " has " << f->arguments << " parameters and " << f->locals << " local variables" << endl;
     // cout << f->name << " has " << f->instructions.size() << " instructions" << endl;
   }

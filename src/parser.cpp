@@ -50,6 +50,7 @@ namespace L1 {
 
   /*
    * Grammar rules from now on.
+   * Structures start with L1_ should not directly bond to action.
    */
   struct L1_label:
     pegtl::seq<
@@ -292,7 +293,6 @@ namespace L1 {
             >
           >,
           pegtl::seq< sop, seps, pegtl::sor< rcx, N > >,
-          // pegtl::seq< plus_minus_op, seps, L1_mem_x_M >,
           inc_dec,
           pegtl::seq< pegtl::one< '@' >, seps, w, seps, w, seps, E >
         >
@@ -341,12 +341,6 @@ namespace L1 {
       N
     > {};
 
-  // struct L1_ins_inc_dec:
-  //   pegtl::seq< inc_dec_w, seps, inc_dec > {};
-
-  // struct L1_ins_cisc:
-  //   pegtl::seq< w, seps, pegtl::one< '@' >, seps, w, seps, w, seps, E > {};
-
   struct L1_instruction:
     pegtl::sor<
       pegtl::seq<
@@ -354,8 +348,6 @@ namespace L1 {
         pegtl::sor<
           L1_ins_mem_or_w_start,
           L1_ins_cjump
-          // pegtl::seq< seps, L1_w, seps, left_arrow, seps, L1_t_cmp_t >, // ?
-          // pegtl::seq< seps, pegtl::string< 'c', 'j', 'u', 'm', 'p' >, seps, L1_t_cmp_t, seps, label, label > //
         >,
         pegtl::one<')'>
       >,
@@ -367,7 +359,6 @@ namespace L1 {
           L1_ins_goto,
           L1_ins_return,
           L1_ins_call_func
-          // L1_ins_cisc
         >,
         seps,
         pegtl::one<')'>
@@ -435,6 +426,10 @@ namespace L1 {
   //   }
   //   return strings;
   // }
+
+  //
+  // Never used, old fashion, manually parse the string,
+  // not efficient.
   vector< std::string > split_by_space(std::string str) {
     // string str("Split me by whitespaces");
     std::string buf; // Have a buffer string
@@ -632,42 +627,14 @@ namespace L1 {
     }
   };
 
+  // 
+  // Actions to collect string from rules, should be a better way.
+  //
   template<> struct action < inc_dec > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
     }
   };
-
-  // template<> struct action < L1_ins_cisc > {
-  //   static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {
-  //     L1::Function *currentF = p.functions.back();
-  //     L1::Instruction *newIns = new L1::Instruction();
-  //     newIns->type = L1::INS_CISC;
-  //
-  //     // vector<std::string> tokens = split_by_space(in.string());
-  //
-  //     L1::Item *newItem = new L1::Item();
-  //     newIns->items.push_back(new_item(v.at(0)));
-  //     newIns->items.push_back(new_item(v.at(2)));
-  //     newIns->items.push_back(new_item2(v.at(3), v.at(4)));
-  //
-  //
-  //     currentF->instructions.push_back(newIns);
-  //     v.clear();
-  //   }
-  // };
-
-  // struct L1_ins_two_op:
-  //   pegtl::sor<
-  //     pegtl::seq< w, seps, left_arrow, seps, s >,
-  //     pegtl::seq< w, seps, left_arrow, seps, L1_mem_x_M >,
-  //     pegtl::seq< L1_mem_x_M, seps, left_arrow, seps, s >,
-  //     pegtl::seq< w, seps, aop, seps, t >,
-  //     pegtl::seq< w, seps, sop, seps, rcx >,
-  //     pegtl::seq< w, seps, sop, seps, N >,
-  //     pegtl::seq< L1_mem_x_M, seps, plus_minus_op, seps, t >,
-  //     pegtl::seq< w, seps, plus_minus_op, seps, L1_mem_x_M >
-  //   > {};
 
   template<> struct action < runtime_system_func > {
     static void apply( const pegtl::input & in, L1::Program & p, std::vector<std::string> & v ) {

@@ -18,35 +18,28 @@ namespace L1 {
   const int INS_CMP = 7;
   const int INS_CJUMP = 8;
 
-  const int INS_TYPE_1_ITEM = 1;
-  const int INS_TYPE_2_ITEM = 2;
-  const int INS_TYPE_CMP    = 3;
-  const int INS_TYPE_CJUMP  = 4;
-  const int INS_TYPE_CISC   = 5;
-
-
   struct L1_item {
     std::string labelName;
   };
 
   struct Item {
-    int type;         // 0: register, 1: label, 2: number
+    int type;         // defined by L1::ITEM_*TYPE*
     std::string name; // for register & label
     int value;        // for register (offset) & number
   };
 
-  struct Cmp {
-    std::vector<L1::Item *> items;
-    // L1::Opperand op;
-    std::string op;
-  };
+  // struct Cmp {
+  //   std::vector<L1::Item *> items;
+  //   // L1::Opperand op;
+  //   std::string op;
+  // };
 
   struct Instruction {
-    int type;     // 0: 0 item, 1: 1 item, 2: 2 items, 3: cmp, 4: cjump, 5: CISC
+    int type;     // defined by L1::INS_*TYPE*
     std::vector<L1::Item *> items;
     // L1::Opperand op;
     std::string op;
-    L1::Cmp cmp;  // 3 & 4 has cmp
+    // L1::Cmp cmp;  // 3 & 4 has cmp
   };
 
   struct Function {
